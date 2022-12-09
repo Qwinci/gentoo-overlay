@@ -9,9 +9,10 @@ SRC_URI="https://github.com/gorilla-devs/GDLauncher/archive/refs/tags/v${PV}.tar
 
 S="${WORKDIR}/GDLauncher-${PV}"
 
-LICENSE="GPL3"
+LICENSE="GPL-3"
 SLOT="0"
-KEYWORDS="~amd64"
+KEYWORDS="amd64"
+RESTRICT="network-sandbox"
 
 RDEPEND=">=app-arch/p7zip-16.02-r8"
 DEPEND=""
@@ -44,22 +45,19 @@ PATCHES=(
 	"${FILESDIR}/use-system-7z-and-disable-autoupdate.patch"
 	"${FILESDIR}/only-build-dir.patch"
 	)
-	
+
 src_prepare() {
 	default
-	
+
 	sed -e '/electron-updater/d;/7zip-bin/d' -i package.json
-	
+
 	mkdir -p .git
 }
 
-src_configure() {}
-
 src_compile() {
 	npm install --legacy-peer-deps --cache="${WORKDIR}/npm-cache"
-
 	npm run build
-	npm run build-electron:setup
+	npm  run build-electron:setup
 	npm run deploy setup
 }
 
@@ -67,7 +65,7 @@ src_install() {
 	install -dm755 "${D}/opt/gdlauncher"
 	cp -r release/linux-unpacked/* "${D}/opt/gdlauncher"
 	install -dm755 "${D}/usr/bin"
-	ln -s "${D}/usr/bin/../../opt/gdlauncher/gdlauncher" "${D}/usr/bin/gdlauncher"
+	ln -sf "/opt/gdlauncher/gdlauncher" "${D}/usr/bin/gdlauncher"
 	install -dm755 "${D}/usr/share/applications"
 	install -Dm644 "${FILESDIR}/GDLauncher.desktop" "${D}/usr/share/applications/GDLauncher.desktop"
 	cd public/linux-icons
@@ -75,28 +73,4 @@ src_install() {
 		install -dm755 "${D}/usr/share/icons/hicolor/${icon::-4}/apps/"
 		cp "$icon" "${D}/usr/share/icons/hicolor/${icon::-4}/apps/${PN}.png"
 	done
-
-	# You must *personally verify* that this trick doesn't install
-	# anything outside of DESTDIR; do this by reading and
-	# understanding the install part of the Makefiles.
-	# This is the preferred way to install.
-	#emake DESTDIR="${D}" install
-
-	# When you hit a failure with emake, do not just use make. It is
-	# better to fix the Makefiles to allow proper parallelization.
-	# If you fail with that, use "emake -j1", it's still better than make.
-
-	# For Makefiles that don't make proper use of DESTDIR, setting
-	# prefix is often an alternative.  However if you do this, then
-	# you also need to specify mandir and infodir, since they were
-	# passed to ./configure as absolute paths (overriding the prefix
-	# setting).
-	#emake \
-	#	prefix="${D}"/usr \
-	#	mandir="${D}"/usr/share/man \
-	#	infodir="${D}"/usr/share/info \
-	#	libdir="${D}"/usr/$(get_libdir) \
-	#	install
-	# Again, verify the Makefiles!  We don't want anything falling
-	# outside of ${D}.
 }
