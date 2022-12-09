@@ -1,0 +1,64 @@
+diff --git a/scripts/createDeploy.js b/scripts/createDeploy.js
+index dad7fdb..47be3e4 100644
+--- a/scripts/createDeploy.js
++++ b/scripts/createDeploy.js
+@@ -100,24 +100,6 @@ const createDeployFiles = async () => {
+ };
+ 
+ const extraFiles = [];
+-let sevenZipPath = null;
+-if (process.platform === 'win32') {
+-  sevenZipPath = 'node_modules/7zip-bin/win/x64/7za.exe';
+-  extraFiles.push({
+-    from: 'vcredist/',
+-    to: './',
+-    filter: '**/*'
+-  });
+-} else if (process.platform === 'linux') {
+-  sevenZipPath = 'node_modules/7zip-bin/linux/x64/7za';
+-} else if (process.platform === 'darwin') {
+-  sevenZipPath = 'node_modules/7zip-bin/mac/x64/7za';
+-}
+-
+-extraFiles.push({
+-  from: sevenZipPath,
+-  to: './'
+-});
+ 
+ const commonConfig = {
+   publish: 'never',
+@@ -191,8 +173,8 @@ const commonConfig = {
+   ...(process.platform === 'linux' && {
+     linux:
+       type === 'setup'
+-        ? ['appimage:x64', 'zip:x64', 'deb:x64', 'rpm:x64']
+-        : ['snap:x64']
++        ? ['dir:x64']
++        : ['dir:x64']
+   }),
+   ...(process.platform === 'win32' && {
+     win: [type === 'setup' ? 'nsis:x64' : 'zip:x64']
+@@ -227,13 +209,7 @@ const main = async () => {
+         path.join(`${productName}-win-${type}.exe.blockmap`),
+         path.join('latest.yml')
+       ],
+-      linux: [
+-        `${productName}-linux-${type}.zip`,
+-        `${productName}-linux-${type}.AppImage`,
+-        `${productName}-linux-${type}.deb`,
+-        `${productName}-linux-${type}.rpm`,
+-        'latest-linux.yml'
+-      ]
++      linux: []
+     },
+     portable: {
+       darwin: [],
+@@ -255,8 +231,6 @@ const main = async () => {
+       }
+     })
+   );
+-
+-  await fse.remove(releasesFolder);
+ };
+ 
+ main().catch(err => {
